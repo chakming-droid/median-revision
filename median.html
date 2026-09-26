@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>中三數學：勞資薪酬博弈 ➔ 中位數 (Median) 的重要性</title>
     <style>
+        *, *::before, *::after { box-sizing: border-box; }
+
         :root {
             --bg-color: #f8fafc;
             --card-bg: #ffffff;
@@ -65,13 +67,14 @@
         }
 
         input[type="number"] {
-            width: 55px;
+            width: 72px;
             padding: 6px;
             font-size: 1rem;
             border: 1px solid #cbd5e1;
             border-radius: 6px;
             text-align: center;
             font-weight: bold;
+            min-height: 44px;
         }
 
         button {
@@ -81,9 +84,9 @@
             padding: 8px 14px;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 0.95rem;
+            font-size: 1rem;
             font-weight: 600;
-            transition: all 0.2s ease;
+            min-height: 44px;
         }
 
         button:hover { background-color: #e2e8f0; }
@@ -94,6 +97,13 @@
             border-color: #0284c7;
         }
         button.btn-reveal:hover { background-color: #0369a1; }
+        button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+        .toolbar-actions {
+            margin-left: auto;
+            display: flex;
+            gap: 8px;
+        }
 
         .canvas-container {
             position: relative;
@@ -102,21 +112,23 @@
             border-radius: 8px;
             padding: 10px;
             user-select: none;
-            touch-action: none;
+            touch-action: pan-y;
         }
 
         svg {
             width: 100%;
             height: 320px;
             display: block;
+            touch-action: pan-y;
         }
 
         .axis-line { stroke: #64748b; stroke-width: 2; }
         .tick-line { stroke: #94a3b8; stroke-width: 1; }
         .tick-label { fill: #64748b; font-size: 12px; text-anchor: middle; }
 
-        .data-point { cursor: grab; transition: r 0.1s ease; }
-        .data-point:active { cursor: grabbing; r: 12; }
+        .data-point { cursor: grab; }
+        .data-point.selected { stroke: #0f172a; stroke-width: 3; }
+        .data-point:active { cursor: grabbing; }
         .point-label { font-size: 11px; fill: #ffffff; font-weight: bold; pointer-events: none; text-anchor: middle; dominant-baseline: central; }
 
         .mean-indicator { stroke: var(--mean-color); stroke-width: 2; stroke-dasharray: 4,4; }
@@ -198,6 +210,137 @@
             font-size: 0.95rem;
             line-height: 1.5;
         }
+
+        .editor-panel {
+            margin-top: 14px;
+            padding: 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: #f8fafc;
+        }
+
+        .editor-panel h3 {
+            margin: 0;
+            font-size: 1rem;
+        }
+
+        .salary-readout {
+            margin: 8px 0;
+            font-size: 1.15rem;
+            font-weight: 800;
+        }
+
+        .overlap-hint {
+            margin: 0 0 8px;
+            color: #9a3412;
+            font-weight: 700;
+        }
+
+        .slider-label {
+            display: block;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        #salary-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 44px;
+            margin: 0;
+            background: transparent;
+            touch-action: none;
+        }
+
+        #salary-slider:disabled { opacity: 0.45; }
+
+        #salary-slider::-webkit-slider-runnable-track {
+            height: 8px;
+            background: #cbd5e1;
+            border-radius: 999px;
+        }
+
+        #salary-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 44px;
+            height: 44px;
+            margin-top: -18px;
+            border-radius: 50%;
+            background: var(--primary);
+            border: 2px solid #ffffff;
+            box-shadow: 0 1px 4px rgba(15, 23, 42, 0.35);
+        }
+
+        #salary-slider::-moz-range-track {
+            height: 8px;
+            background: #cbd5e1;
+            border-radius: 999px;
+        }
+
+        #salary-slider::-moz-range-thumb {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--primary);
+            border: 2px solid #ffffff;
+        }
+
+        .step-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .step-btn {
+            flex: 1 1 40%;
+            min-height: 48px;
+            touch-action: none;
+        }
+
+        .step-fine { border-color: var(--primary); color: var(--primary); }
+
+        .people-heading {
+            margin: 14px 0 8px;
+            font-weight: 700;
+        }
+
+        .people-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .people-chip {
+            min-height: 44px;
+        }
+
+        .people-chip.selected {
+            border-color: var(--primary);
+            background: #dbeafe;
+        }
+
+        .people-chip.candidate {
+            border: 2px solid #fdba74;
+        }
+
+        @media (max-width: 720px) {
+            body { padding: 10px; }
+            .container { padding: 14px; }
+            svg { height: auto; aspect-ratio: 800 / 320; }
+            .toolbar-actions { margin-left: 0; width: 100%; }
+            .toolbar-actions button { flex: 1; }
+        }
+
+        @media (min-width: 800px) {
+            .editor-top {
+                display: flex;
+                align-items: center;
+                gap: 16px;
+            }
+            .editor-top .salary-readout { margin: 0; min-width: 180px; }
+            .editor-slider { flex: 1; }
+        }
     </style>
 </head>
 <body>
@@ -212,7 +355,7 @@
             <button onclick="changePointCount(-1)">－ 減少</button>
             <button onclick="changePointCount(1)">＋ 增加</button>
         </div>
-        <div style="margin-left: auto; display: flex; gap: 8px;">
+        <div class="toolbar-actions">
             <button class="btn-reveal" onclick="toggleRevealMedian()">💡 <span id="btn-reveal-text">顯示中位數答案</span></button>
             <button onclick="resetToDefault()">重置預設</button>
         </div>
@@ -221,6 +364,28 @@
     <div class="canvas-container">
         <svg id="svg-canvas" viewBox="0 0 800 320"></svg>
     </div>
+
+    <section class="editor-panel" aria-labelledby="editor-heading">
+        <h3 id="editor-heading">更改所選員工的薪酬</h3>
+        <div class="editor-top">
+            <p id="salary-readout" class="salary-readout">請先點選數軸上的圓點，或按下面的員工。</p>
+            <div class="editor-slider">
+                <label class="slider-label" for="salary-slider">薪酬（每格 $1,000）</label>
+                <input id="salary-slider" type="range" min="0" max="220000" step="1000" value="15000" disabled>
+            </div>
+        </div>
+        <p id="overlap-hint" class="overlap-hint" hidden>圓點重疊，請在員工名單選擇。</p>
+        <div class="step-row">
+            <button type="button" class="step-btn step-fine" data-delta="-1000" disabled>－$1,000</button>
+            <button type="button" class="step-btn step-fine" data-delta="1000" disabled>＋$1,000</button>
+        </div>
+        <div class="step-row">
+            <button type="button" class="step-btn" data-delta="-10000" disabled>－$10,000</button>
+            <button type="button" class="step-btn" data-delta="10000" disabled>＋$10,000</button>
+        </div>
+        <p id="people-heading" class="people-heading">員工名單（未按薪酬排序，只可用來揀人）</p>
+        <div id="people-list" class="people-list" role="group" aria-labelledby="people-heading"></div>
+    </section>
 
     <!-- 三大統計量卡片對比 -->
     <div class="dashboard">
@@ -246,7 +411,7 @@
     </div>
 
     <div class="insight-box" id="insight-text">
-        思考題：請先在工作紙上找出正中間的「中位數」，然後按右上角「顯示中位數答案」驗證你的答案！
+        思考題：請先在工作紙上找出正中間的「中位數」，然後按「顯示中位數答案」驗證你的答案！
     </div>
 </div>
 
@@ -260,17 +425,81 @@
     const MAX_VAL = 220000;
 
     let points = [15000, 15000, 15000, 21000, 200000]; // 預設：3位基層($15k)、1位主管($21k)、1位老闆($200k)
-    let draggedIndex = null;
+    let selectedIndex = null;
+    let ambiguousIndices = [];
+    let activePointer = null;
     let isMedianRevealed = false; // 是否顯示中位數高亮與指標
+    let peopleBuiltFor = -1;
 
     function valToX(val) {
         return MARGIN_X + (val - MIN_VAL) / (MAX_VAL - MIN_VAL) * (SVG_WIDTH - 2 * MARGIN_X);
     }
 
+    function snapSalary(raw) {
+        let v = Math.round(Number(raw) / 1000) * 1000;
+        if (!Number.isFinite(v)) v = 0;
+        return Math.max(MIN_VAL, Math.min(MAX_VAL, v));
+    }
+
     function xToVal(x) {
-        let raw = MIN_VAL + (x - MARGIN_X) / (SVG_WIDTH - 2 * MARGIN_X) * (MAX_VAL - MIN_VAL);
-        raw = Math.max(MIN_VAL, Math.min(MAX_VAL, raw));
-        return Math.round(raw / 1000) * 1000;
+        const raw = MIN_VAL + (x - MARGIN_X) / (SVG_WIDTH - 2 * MARGIN_X) * (MAX_VAL - MIN_VAL);
+        return snapSalary(raw);
+    }
+
+    function letterOf(index) {
+        return String.fromCharCode(65 + index);
+    }
+
+    function stackLayout(count) {
+        const bottom = AXIS_Y - 18;
+        if (count <= 7) return { gap: 24, r: 10, bottom };
+        const slots = count - 1;
+        let gap = 167 / (slots + 0.5);
+        let r = Math.max(6, gap / 2 - 1);
+        if (gap >= 22) r = 10;
+        if (slots * gap + r > 166) gap = (166 - r) / slots;
+        return { gap, r, bottom };
+    }
+
+    function pointPositions() {
+        const counts = {};
+        points.forEach(v => { counts[v] = (counts[v] || 0) + 1; });
+        const seen = {};
+        return points.map((val, idx) => {
+            const layout = stackLayout(counts[val]);
+            const stackIndex = seen[val] || 0;
+            seen[val] = stackIndex + 1;
+            return {
+                idx,
+                val,
+                x: valToX(val),
+                y: layout.bottom - stackIndex * layout.gap,
+                r: layout.r
+            };
+        });
+    }
+
+    function clientToSvg(clientX, clientY) {
+        const rect = svg.getBoundingClientRect();
+        const scale = Math.min(rect.width / SVG_WIDTH, rect.height / SVG_HEIGHT) || 1;
+        const offsetX = (rect.width - SVG_WIDTH * scale) / 2;
+        const offsetY = (rect.height - SVG_HEIGHT * scale) / 2;
+        return {
+            svgX: (clientX - rect.left - offsetX) / scale,
+            svgY: (clientY - rect.top - offsetY) / scale,
+            scale
+        };
+    }
+
+    function locatePoint(svgX, svgY, pointerType, scale) {
+        const hits = [];
+        pointPositions().forEach(p => {
+            const radius = pointerType === 'touch' ? (22 / scale) : (p.r + 2);
+            const d = Math.hypot(svgX - p.x, svgY - p.y);
+            if (d <= radius) hits.push({ idx: p.idx, d, x: p.x });
+        });
+        hits.sort((a, b) => a.d - b.d || a.idx - b.idx);
+        return hits;
     }
 
     function hideMedian() {
@@ -296,7 +525,9 @@
         } else if (targetCount < currentCount) {
             points = points.slice(0, targetCount);
         }
-        hideMedian(); // 操作時自動隱藏中位數
+        if (selectedIndex != null && selectedIndex >= points.length) selectedIndex = null;
+        ambiguousIndices = [];
+        hideMedian();
         render();
     }
 
@@ -312,8 +543,64 @@
     function resetToDefault() {
         points = [15000, 15000, 15000, 21000, 200000];
         document.getElementById('point-count-input').value = 5;
+        selectedIndex = null;
+        ambiguousIndices = [];
         hideMedian();
         render();
+    }
+
+    function selectPoint(index) {
+        if (index == null || index < 0 || index >= points.length) return;
+        selectedIndex = index;
+        ambiguousIndices = [];
+        render();
+    }
+
+    function setSalary(index, raw) {
+        if (index == null || index < 0 || index >= points.length) return;
+        const next = snapSalary(raw);
+        if (points[index] === next) return;
+        points[index] = next;
+        hideMedian();
+        render();
+    }
+
+    function syncEditor() {
+        const readout = document.getElementById('salary-readout');
+        const slider = document.getElementById('salary-slider');
+        const hint = document.getElementById('overlap-hint');
+        const list = document.getElementById('people-list');
+        const hasSel = selectedIndex != null && selectedIndex < points.length;
+
+        readout.textContent = hasSel
+            ? `員工 ${letterOf(selectedIndex)}：$${points[selectedIndex].toLocaleString()}`
+            : '請先點選數軸上的圓點，或按下面的員工。';
+        slider.disabled = !hasSel;
+        document.querySelectorAll('.step-btn').forEach(btn => { btn.disabled = !hasSel; });
+        if (hasSel && document.activeElement !== slider) slider.value = String(points[selectedIndex]);
+        hint.hidden = ambiguousIndices.length === 0;
+
+        if (peopleBuiltFor !== points.length) {
+            list.replaceChildren();
+            points.forEach((_, idx) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'people-chip';
+                btn.dataset.index = String(idx);
+                btn.setAttribute('aria-pressed', 'false');
+                list.appendChild(btn);
+            });
+            peopleBuiltFor = points.length;
+        }
+
+        list.querySelectorAll('.people-chip').forEach(btn => {
+            const idx = Number(btn.dataset.index);
+            btn.textContent = `${letterOf(idx)}　$${points[idx].toLocaleString()}`;
+            const selected = idx === selectedIndex;
+            btn.classList.toggle('selected', selected);
+            btn.classList.toggle('candidate', ambiguousIndices.includes(idx));
+            btn.setAttribute('aria-pressed', selected ? 'true' : 'false');
+        });
     }
 
     function calcStats() {
@@ -352,6 +639,14 @@
     function render() {
         svg.innerHTML = '';
         const { sorted, mean, median, modeVals, maxFreq, n } = calcStats();
+
+        const plate = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        plate.setAttribute('x', '0');
+        plate.setAttribute('y', '0');
+        plate.setAttribute('width', String(SVG_WIDTH));
+        plate.setAttribute('height', String(SVG_HEIGHT));
+        plate.setAttribute('fill', 'transparent');
+        svg.appendChild(plate);
 
         // 1. 數軸刻度
         let axisLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
@@ -437,36 +732,30 @@
         meanTag.textContent = `平均數 $${Math.round(mean).toLocaleString()}`;
         svg.appendChild(meanTag);
 
-        // 4. 繪製數據點 (Dot Plot)
-        const valMap = {};
-        points.forEach((val, idx) => {
-            valMap[val] = (valMap[val] || 0) + 1;
-            const stackIndex = valMap[val] - 1;
-            const px = valToX(val);
-            const py = AXIS_Y - 18 - (stackIndex * 24);
-
+        // 4. 繪製數據點 (Dot Plot)。點選改由 #svg-canvas 的 pointer 事件處理。
+        pointPositions().forEach(p => {
             let circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-            circle.setAttribute('cx', px); circle.setAttribute('cy', py);
-            circle.setAttribute('r', 10);
-            circle.setAttribute('class', 'data-point');
+            circle.setAttribute('cx', p.x);
+            circle.setAttribute('cy', p.y);
+            circle.setAttribute('r', p.r);
+            circle.setAttribute('class', p.idx === selectedIndex ? 'data-point selected' : 'data-point');
+            circle.dataset.index = String(p.idx);
 
-            if (val >= 150000) {
-                circle.setAttribute('fill', '#dc2626'); // 極端值老闆 (紅點)
-            } else if (modeVals.includes(val) && maxFreq > 1) {
-                circle.setAttribute('fill', '#ea580c'); // 眾數數據點 (橘點)
+            if (p.val >= 150000) {
+                circle.setAttribute('fill', '#dc2626');
+            } else if (modeVals.includes(p.val) && maxFreq > 1) {
+                circle.setAttribute('fill', '#ea580c');
             } else {
                 circle.setAttribute('fill', '#3b82f6');
             }
 
-            circle.addEventListener('mousedown', (e) => startDrag(idx, e));
-            circle.addEventListener('touchstart', (e) => startDrag(idx, e), {passive: false});
-
             svg.appendChild(circle);
 
             let txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-            txt.setAttribute('x', px); txt.setAttribute('y', py);
+            txt.setAttribute('x', p.x);
+            txt.setAttribute('y', p.y);
             txt.setAttribute('class', 'point-label');
-            txt.textContent = String.fromCharCode(65 + idx);
+            txt.textContent = letterOf(p.idx);
             svg.appendChild(txt);
         });
 
@@ -503,40 +792,92 @@
             }
         } else {
             document.getElementById('text-median-desc').textContent = `正中間 50% 位置的數據值`;
-            document.getElementById('insight-text').innerHTML = `🎯 <strong>課堂挑戰：</strong> 觀察上面的排序數據，數據共有 <strong>${n}</strong> 項。請問正中間的中位數是多少？算好後請按右上角按鈕驗證！`;
+            document.getElementById('insight-text').innerHTML = `🎯 <strong>課堂挑戰：</strong> 觀察上面的排序數據，數據共有 <strong>${n}</strong> 項。請問正中間的中位數是多少？算好後請按「顯示中位數答案」驗證！`;
+        }
+        syncEditor();
+    }
+
+    function salaryFromPointer(clientX, grabOffset) {
+        const { svgX } = clientToSvg(clientX, 0);
+        return xToVal(svgX - grabOffset);
+    }
+
+    function onPointerDown(e) {
+        if (e.button != null && e.button !== 0) return;
+        const pos = clientToSvg(e.clientX, e.clientY);
+        const hits = locatePoint(pos.svgX, pos.svgY, e.pointerType, pos.scale);
+        const unique = hits.length === 1 ? hits[0] : null;
+        activePointer = {
+            id: e.pointerId,
+            type: e.pointerType,
+            startX: e.clientX,
+            startY: e.clientY,
+            index: unique ? unique.idx : null,
+            grabOffset: unique ? (pos.svgX - unique.x) : 0,
+            ambiguous: hits.length > 1,
+            hitIndices: hits.map(h => h.idx),
+            dragging: false,
+            canDrag: e.pointerType === 'touch'
+                ? Boolean(unique && unique.idx === selectedIndex)
+                : Boolean(unique)
+        };
+        if (activePointer.canDrag) {
+            svg.setPointerCapture(e.pointerId);
         }
     }
 
-    function startDrag(index, e) {
-        draggedIndex = index;
-        hideMedian(); // 拖拉時自動隱藏答案
-        window.addEventListener('mousemove', onDrag);
-        window.addEventListener('mouseup', endDrag);
-        window.addEventListener('touchmove', onDrag, {passive: false});
-        window.addEventListener('touchend', endDrag);
+    function onPointerMove(e) {
+        if (!activePointer || e.pointerId !== activePointer.id || !activePointer.canDrag) return;
+        const dist = Math.hypot(e.clientX - activePointer.startX, e.clientY - activePointer.startY);
+        const threshold = activePointer.type === 'touch' ? 8 : 4;
+        if (!activePointer.dragging && dist > threshold) {
+            activePointer.dragging = true;
+            selectedIndex = activePointer.index;
+            ambiguousIndices = [];
+            render();
+        }
+        if (!activePointer.dragging) return;
+        e.preventDefault();
+        setSalary(activePointer.index, salaryFromPointer(e.clientX, activePointer.grabOffset));
     }
 
-    function onDrag(e) {
-        if (draggedIndex === null) return;
-        if (e.touches) e = e.touches[0];
-
-        const rect = svg.getBoundingClientRect();
-        const clientX = e.clientX - rect.left;
-        const svgX = (clientX / rect.width) * SVG_WIDTH;
-
-        points[draggedIndex] = xToVal(svgX);
-        render();
+    function onPointerUp(e) {
+        if (!activePointer || e.pointerId !== activePointer.id) return;
+        const dist = Math.hypot(e.clientX - activePointer.startX, e.clientY - activePointer.startY);
+        const tapLimit = activePointer.type === 'touch' ? 8 : 4;
+        const gesture = activePointer;
+        activePointer = null;
+        if (e.type === 'pointercancel' || gesture.dragging || dist >= tapLimit) return;
+        if (gesture.ambiguous) {
+            ambiguousIndices = gesture.hitIndices.slice();
+            syncEditor();
+            return;
+        }
+        if (gesture.index != null) selectPoint(gesture.index);
     }
 
-    function endDrag() {
-        draggedIndex = null;
-        window.removeEventListener('mousemove', onDrag);
-        window.removeEventListener('mouseup', endDrag);
-        window.removeEventListener('touchmove', onDrag);
-        window.removeEventListener('touchend', endDrag);
-    }
+    document.getElementById('people-list').addEventListener('click', (e) => {
+        const btn = e.target.closest('.people-chip');
+        if (!btn) return;
+        selectPoint(Number(btn.dataset.index));
+    });
 
-    // 初始化
+    document.getElementById('salary-slider').addEventListener('input', (e) => {
+        if (selectedIndex == null) return;
+        setSalary(selectedIndex, e.target.value);
+    });
+
+    document.querySelector('.editor-panel').addEventListener('click', (e) => {
+        const btn = e.target.closest('.step-btn');
+        if (!btn || selectedIndex == null || btn.disabled) return;
+        setSalary(selectedIndex, points[selectedIndex] + Number(btn.dataset.delta));
+    });
+
+    svg.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('pointermove', onPointerMove, { passive: false });
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerUp);
+
     render();
 </script>
 
