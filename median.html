@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中三數學：勞資薪酬博弈 ➔ 中位數 (Median) 的重要性</title>
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --primary: #2563eb;
+            --mean-color: #dc2626;    /* 老闆：平均數 (紅) */
+            --mode-color: #ea580c;    /* 勞工：眾數 (橘) */
+            --median-color: #0284c7;  /* 公平：中位數 (藍) */
+            --highlight: #fef08a;
+            --text-dark: #1e293b;
+            --border-color: #e2e8f0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 920px;
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            padding: 24px;
+        }
+
+        h2 {
+            margin-top: 0;
+            color: #0f172a;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 12px;
+            font-size: 1.35rem;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            align-items: center;
+            background: #f8fafc;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: bold;
+            color: #334155;
+        }
+
+        input[type="number"] {
+            width: 55px;
+            padding: 6px;
+            font-size: 1rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        button {
+            background-color: #ffffff;
+            color: #334155;
+            border: 1px solid #cbd5e1;
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        button:hover { background-color: #e2e8f0; }
+
+        button.btn-reveal {
+            background-color: #0284c7;
+            color: white;
+            border-color: #0284c7;
+        }
+        button.btn-reveal:hover { background-color: #0369a1; }
+
+        .canvas-container {
+            position: relative;
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px;
+            user-select: none;
+            touch-action: none;
+        }
+
+        svg {
+            width: 100%;
+            height: 320px;
+            display: block;
+        }
+
+        .axis-line { stroke: #64748b; stroke-width: 2; }
+        .tick-line { stroke: #94a3b8; stroke-width: 1; }
+        .tick-label { fill: #64748b; font-size: 12px; text-anchor: middle; }
+
+        .data-point { cursor: grab; transition: r 0.1s ease; }
+        .data-point:active { cursor: grabbing; r: 12; }
+        .point-label { font-size: 11px; fill: #ffffff; font-weight: bold; pointer-events: none; text-anchor: middle; dominant-baseline: central; }
+
+        .mean-indicator { stroke: var(--mean-color); stroke-width: 2; stroke-dasharray: 4,4; }
+        .median-indicator { stroke: var(--median-color); stroke-width: 3; }
+
+        .midpoint-region { fill: var(--highlight); opacity: 0.6; }
+        .midpoint-line { stroke: #d97706; stroke-width: 2; stroke-dasharray: 3,3; }
+
+        /* 資訊卡片區 */
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .card {
+            border-radius: 8px;
+            padding: 14px;
+            border: 1px solid var(--border-color);
+            background: #fafafa;
+        }
+
+        .card.mean-card { border-left: 5px solid var(--mean-color); }
+        .card.mode-card { border-left: 5px solid var(--mode-color); }
+        .card.median-card { border-left: 5px solid var(--median-color); }
+
+        .card-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .mean-card .card-title { color: var(--mean-color); }
+        .mode-card .card-title { color: var(--mode-color); }
+        .median-card .card-title { color: var(--median-color); }
+
+        .card-value {
+            font-size: 1.6rem;
+            font-weight: 800;
+        }
+
+        .mean-card .card-value { color: var(--mean-color); }
+        .mode-card .card-value { color: var(--mode-color); }
+        .median-card .card-value { color: var(--median-color); }
+
+        .card-desc {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-top: 4px;
+        }
+
+        .data-list {
+            margin-top: 16px;
+            background: #f1f5f9;
+            padding: 14px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        .highlight-target {
+            background-color: #fef08a;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            color: #b45309;
+            border: 1px dashed #f59e0b;
+        }
+
+        .insight-box {
+            margin-top: 14px;
+            padding: 12px 16px;
+            background-color: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 6px;
+            color: #1e40af;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>中三數學：勞資薪酬博弈 ➔ 中位數 (Median) 的重要性</h2>
+    
+    <div class="toolbar">
+        <div class="control-group">
+            <label for="point-count-input">數據數量 (N)：</label>
+            <input type="number" id="point-count-input" value="5" min="1" max="15" onchange="updatePointCountFromInput()">
+            <button onclick="changePointCount(-1)">－ 減少</button>
+            <button onclick="changePointCount(1)">＋ 增加</button>
+        </div>
+        <div style="margin-left: auto; display: flex; gap: 8px;">
+            <button class="btn-reveal" onclick="toggleRevealMedian()">💡 <span id="btn-reveal-text">顯示中位數答案</span></button>
+            <button onclick="resetToDefault()">重置預設</button>
+        </div>
+    </div>
+
+    <div class="canvas-container">
+        <svg id="svg-canvas" viewBox="0 0 800 320"></svg>
+    </div>
+
+    <!-- 三大統計量卡片對比 -->
+    <div class="dashboard">
+        <div class="card mean-card">
+            <div class="card-title">🏢 老闆主張：平均數 (Mean)</div>
+            <div class="card-value" id="val-mean">$0</div>
+            <div class="card-desc">受極端高薪（老闆 $200k）拉高，宣稱「公司平均薪酬高」</div>
+        </div>
+        <div class="card mode-card">
+            <div class="card-title">👷 勞工主張：眾數 (Mode)</div>
+            <div class="card-value" id="val-mode">$0</div>
+            <div class="card-desc">出現次數最多，反映基層最常見的低薪現狀</div>
+        </div>
+        <div class="card median-card">
+            <div class="card-title">⚖️ 公平指標：中位數 (Median)</div>
+            <div class="card-value" id="val-median">$???</div>
+            <div class="card-desc" id="text-median-desc">正中間 50% 位置的數據值</div>
+        </div>
+    </div>
+
+    <div class="data-list" id="data-array-display">
+        排序數據：[...]
+    </div>
+
+    <div class="insight-box" id="insight-text">
+        思考題：請先在工作紙上找出正中間的「中位數」，然後按右上角「顯示中位數答案」驗證你的答案！
+    </div>
+</div>
+
+<script>
+    const svg = document.getElementById('svg-canvas');
+    const SVG_WIDTH = 800;
+    const SVG_HEIGHT = 320;
+    const MARGIN_X = 60;
+    const AXIS_Y = 240;
+    const MIN_VAL = 0;
+    const MAX_VAL = 220000;
+
+    let points = [15000, 15000, 15000, 21000, 200000]; // 預設：3位基層($15k)、1位主管($21k)、1位老闆($200k)
+    let draggedIndex = null;
+    let isMedianRevealed = false; // 是否顯示中位數高亮與指標
+
+    function valToX(val) {
+        return MARGIN_X + (val - MIN_VAL) / (MAX_VAL - MIN_VAL) * (SVG_WIDTH - 2 * MARGIN_X);
+    }
+
+    function xToVal(x) {
+        let raw = MIN_VAL + (x - MARGIN_X) / (SVG_WIDTH - 2 * MARGIN_X) * (MAX_VAL - MIN_VAL);
+        raw = Math.max(MIN_VAL, Math.min(MAX_VAL, raw));
+        return Math.round(raw / 1000) * 1000;
+    }
+
+    function hideMedian() {
+        isMedianRevealed = false;
+        document.getElementById('btn-reveal-text').textContent = '顯示中位數答案';
+    }
+
+    function toggleRevealMedian() {
+        isMedianRevealed = !isMedianRevealed;
+        document.getElementById('btn-reveal-text').textContent = isMedianRevealed ? '隱藏中位數答案' : '顯示中位數答案';
+        render();
+    }
+
+    function setPointCount(targetCount) {
+        targetCount = Math.max(1, Math.min(15, targetCount));
+        document.getElementById('point-count-input').value = targetCount;
+
+        const currentCount = points.length;
+        if (targetCount > currentCount) {
+            for (let i = currentCount; i < targetCount; i++) {
+                points.push(15000); // 預設新增基層員工
+            }
+        } else if (targetCount < currentCount) {
+            points = points.slice(0, targetCount);
+        }
+        hideMedian(); // 操作時自動隱藏中位數
+        render();
+    }
+
+    function changePointCount(delta) {
+        setPointCount(points.length + delta);
+    }
+
+    function updatePointCountFromInput() {
+        const val = parseInt(document.getElementById('point-count-input').value) || 1;
+        setPointCount(val);
+    }
+
+    function resetToDefault() {
+        points = [15000, 15000, 15000, 21000, 200000];
+        document.getElementById('point-count-input').value = 5;
+        hideMedian();
+        render();
+    }
+
+    function calcStats() {
+        const sorted = [...points].sort((a, b) => a - b);
+        const sum = sorted.reduce((acc, curr) => acc + curr, 0);
+        const mean = sum / sorted.length;
+        
+        // 計算中位數
+        let median = 0;
+        const n = sorted.length;
+        if (n % 2 !== 0) {
+            median = sorted[Math.floor(n / 2)];
+        } else {
+            const mid1 = sorted[n / 2 - 1];
+            const mid2 = sorted[n / 2];
+            median = (mid1 + mid2) / 2;
+        }
+
+        // 計算眾數 (Mode)
+        const counts = {};
+        let maxFreq = 0;
+        let modeVals = [];
+        sorted.forEach(v => {
+            counts[v] = (counts[v] || 0) + 1;
+            if (counts[v] > maxFreq) maxFreq = counts[v];
+        });
+        for (let key in counts) {
+            if (counts[key] === maxFreq) {
+                modeVals.push(Number(key));
+            }
+        }
+
+        return { sorted, mean, median, modeVals, maxFreq, n };
+    }
+
+    function render() {
+        svg.innerHTML = '';
+        const { sorted, mean, median, modeVals, maxFreq, n } = calcStats();
+
+        // 1. 數軸刻度
+        let axisLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        axisLine.setAttribute('x1', MARGIN_X); axisLine.setAttribute('y1', AXIS_Y);
+        axisLine.setAttribute('x2', SVG_WIDTH - MARGIN_X); axisLine.setAttribute('y2', AXIS_Y);
+        axisLine.setAttribute('class', 'axis-line');
+        svg.appendChild(axisLine);
+
+        for (let v = 0; v <= MAX_VAL; v += 50000) {
+            const x = valToX(v);
+            let tick = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            tick.setAttribute('x1', x); tick.setAttribute('y1', AXIS_Y);
+            tick.setAttribute('x2', x); tick.setAttribute('y2', AXIS_Y + 6);
+            tick.setAttribute('class', 'tick-line');
+            svg.appendChild(tick);
+
+            let label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            label.setAttribute('x', x); label.setAttribute('y', AXIS_Y + 22);
+            label.setAttribute('class', 'tick-label');
+            label.textContent = `$${v/1000}k`;
+            svg.appendChild(label);
+        }
+
+        // 2. 只有按按鈕揭曉時：繪製中位數區域與藍色指標線
+        if (isMedianRevealed) {
+            if (n % 2 === 0) {
+                const m1Val = sorted[n / 2 - 1];
+                const m2Val = sorted[n / 2];
+                const x1 = valToX(m1Val);
+                const x2 = valToX(m2Val);
+
+                let bgRegion = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                bgRegion.setAttribute('x', Math.min(x1, x2));
+                bgRegion.setAttribute('y', 40);
+                bgRegion.setAttribute('width', Math.abs(x2 - x1));
+                bgRegion.setAttribute('height', AXIS_Y - 40);
+                bgRegion.setAttribute('class', 'midpoint-region');
+                svg.appendChild(bgRegion);
+
+                let midSegment = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                midSegment.setAttribute('x1', x1); midSegment.setAttribute('y1', 120);
+                midSegment.setAttribute('x2', x2); midSegment.setAttribute('y2', 120);
+                midSegment.setAttribute('class', 'midpoint-line');
+                svg.appendChild(midSegment);
+            }
+
+            const medX = valToX(median);
+            let medLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            medLine.setAttribute('x1', medX); medLine.setAttribute('y1', 30);
+            medLine.setAttribute('x2', medX); medLine.setAttribute('y2', AXIS_Y);
+            medLine.setAttribute('class', 'median-indicator');
+            svg.appendChild(medLine);
+
+            let medTag = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            medTag.setAttribute('x', medX); medTag.setAttribute('y', 20);
+            medTag.setAttribute('fill', '#0284c7');
+            medTag.setAttribute('font-weight', 'bold');
+            medTag.setAttribute('font-size', '13px');
+            medTag.setAttribute('text-anchor', 'middle');
+            medTag.textContent = `中位數 $${median.toLocaleString()}`;
+            svg.appendChild(medTag);
+        }
+
+        // 3. 繪製平均數指標 (紅色槓桿支點)
+        const meanX = valToX(mean);
+        let meanLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        meanLine.setAttribute('x1', meanX); meanLine.setAttribute('y1', 50);
+        meanLine.setAttribute('x2', meanX); meanLine.setAttribute('y2', AXIS_Y);
+        meanLine.setAttribute('class', 'mean-indicator');
+        svg.appendChild(meanLine);
+
+        let fulcrum = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+        fulcrum.setAttribute('points', `${meanX},${AXIS_Y} ${meanX-10},${AXIS_Y+15} ${meanX+10},${AXIS_Y+15}`);
+        fulcrum.setAttribute('fill', '#dc2626');
+        svg.appendChild(fulcrum);
+
+        let meanTag = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        meanTag.setAttribute('x', meanX); meanTag.setAttribute('y', 42);
+        meanTag.setAttribute('fill', '#dc2626');
+        meanTag.setAttribute('font-weight', 'bold');
+        meanTag.setAttribute('font-size', '12px');
+        meanTag.setAttribute('text-anchor', 'middle');
+        meanTag.textContent = `平均數 $${Math.round(mean).toLocaleString()}`;
+        svg.appendChild(meanTag);
+
+        // 4. 繪製數據點 (Dot Plot)
+        const valMap = {};
+        points.forEach((val, idx) => {
+            valMap[val] = (valMap[val] || 0) + 1;
+            const stackIndex = valMap[val] - 1;
+            const px = valToX(val);
+            const py = AXIS_Y - 18 - (stackIndex * 24);
+
+            let circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('cx', px); circle.setAttribute('cy', py);
+            circle.setAttribute('r', 10);
+            circle.setAttribute('class', 'data-point');
+
+            if (val >= 150000) {
+                circle.setAttribute('fill', '#dc2626'); // 極端值老闆 (紅點)
+            } else if (modeVals.includes(val) && maxFreq > 1) {
+                circle.setAttribute('fill', '#ea580c'); // 眾數數據點 (橘點)
+            } else {
+                circle.setAttribute('fill', '#3b82f6');
+            }
+
+            circle.addEventListener('mousedown', (e) => startDrag(idx, e));
+            circle.addEventListener('touchstart', (e) => startDrag(idx, e), {passive: false});
+
+            svg.appendChild(circle);
+
+            let txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            txt.setAttribute('x', px); txt.setAttribute('y', py);
+            txt.setAttribute('class', 'point-label');
+            txt.textContent = String.fromCharCode(65 + idx);
+            svg.appendChild(txt);
+        });
+
+        // 5. 更新 Dashboard 數據卡片 (中位數卡片根據 isMedianRevealed 決定是否隱藏)
+        document.getElementById('val-mean').textContent = `$${Math.round(mean).toLocaleString()}`;
+        document.getElementById('val-mode').textContent = (maxFreq > 1) ? `$${modeVals.map(v => v.toLocaleString()).join(', $')}` : '無眾數';
+        document.getElementById('val-median').textContent = isMedianRevealed ? `$${median.toLocaleString()}` : '$???';
+
+        // 6. 渲染排序數據清單 (按按鈕後才加上黃色 highlight)
+        let sortedStr = sorted.map((v, i) => {
+            const formattedVal = `$${v.toLocaleString()}`;
+            if (isMedianRevealed) {
+                if (n % 2 !== 0 && i === Math.floor(n / 2)) {
+                    return `<span class="highlight-target">${formattedVal} (中位數)</span>`;
+                } else if (n % 2 === 0 && (i === n/2 - 1 || i === n/2)) {
+                    return `<span class="highlight-target">${formattedVal}</span>`;
+                }
+            }
+            return formattedVal;
+        }).join(' , ');
+
+        document.getElementById('data-array-display').innerHTML = `<strong>排序數據 (共 ${n} 項)：</strong> [ ${sortedStr} ]`;
+
+        // 7. 更新底部探究指引
+        if (isMedianRevealed) {
+            if (n % 2 === 0) {
+                const m1 = sorted[n / 2 - 1];
+                const m2 = sorted[n / 2];
+                document.getElementById('text-median-desc').textContent = `中間兩項求平均：($${m1.toLocaleString()} + $${m2.toLocaleString()}) ÷ 2`;
+                document.getElementById('insight-text').innerHTML = `💡 <strong>答案揭曉 ($N=${n}$ 偶數)：</strong> 中位數是中間第 ${n/2} 項與第 ${n/2+1} 項的平均數 <strong>$${median.toLocaleString()}</strong>。你看老闆的 $200k 高薪有影響到中位數嗎？`;
+            } else {
+                document.getElementById('text-median-desc').textContent = `正中間第 ${(n+1)/2} 項的值`;
+                document.getElementById('insight-text').innerHTML = `💡 <strong>答案揭曉 ($N=${n}$ 奇數)：</strong> 正中間第 ${(n+1)/2} 項的值就是中位數 <strong>$${median.toLocaleString()}</strong>。相比被老闆拉高的平均數（$${Math.round(mean).toLocaleString()}），中位數更能代表中等階層！`;
+            }
+        } else {
+            document.getElementById('text-median-desc').textContent = `正中間 50% 位置的數據值`;
+            document.getElementById('insight-text').innerHTML = `🎯 <strong>課堂挑戰：</strong> 觀察上面的排序數據，數據共有 <strong>${n}</strong> 項。請問正中間的中位數是多少？算好後請按右上角按鈕驗證！`;
+        }
+    }
+
+    function startDrag(index, e) {
+        draggedIndex = index;
+        hideMedian(); // 拖拉時自動隱藏答案
+        window.addEventListener('mousemove', onDrag);
+        window.addEventListener('mouseup', endDrag);
+        window.addEventListener('touchmove', onDrag, {passive: false});
+        window.addEventListener('touchend', endDrag);
+    }
+
+    function onDrag(e) {
+        if (draggedIndex === null) return;
+        if (e.touches) e = e.touches[0];
+
+        const rect = svg.getBoundingClientRect();
+        const clientX = e.clientX - rect.left;
+        const svgX = (clientX / rect.width) * SVG_WIDTH;
+
+        points[draggedIndex] = xToVal(svgX);
+        render();
+    }
+
+    function endDrag() {
+        draggedIndex = null;
+        window.removeEventListener('mousemove', onDrag);
+        window.removeEventListener('mouseup', endDrag);
+        window.removeEventListener('touchmove', onDrag);
+        window.removeEventListener('touchend', endDrag);
+    }
+
+    // 初始化
+    render();
+</script>
+
+</body>
+</html>
