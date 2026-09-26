@@ -494,7 +494,7 @@
     function locatePoint(svgX, svgY, pointerType, scale) {
         const hits = [];
         pointPositions().forEach(p => {
-            const radius = pointerType === 'touch' ? (22 / scale) : (p.r + 2);
+            const radius = pointerType === 'touch' ? (22 / scale) : 12;
             const d = Math.hypot(svgX - p.x, svgY - p.y);
             if (d <= radius) hits.push({ idx: p.idx, d, x: p.x });
         });
@@ -759,6 +759,22 @@
             svg.appendChild(txt);
         });
 
+        if (selectedIndex != null) {
+            const selected = pointPositions().find(p => p.idx === selectedIndex);
+            if (selected) {
+                const rect = svg.getBoundingClientRect();
+                const scale = Math.min(rect.width / SVG_WIDTH, rect.height / SVG_HEIGHT) || 1;
+                const catchCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                catchCircle.setAttribute('cx', selected.x);
+                catchCircle.setAttribute('cy', selected.y);
+                catchCircle.setAttribute('r', 22 / scale);
+                catchCircle.setAttribute('fill', 'transparent');
+                catchCircle.setAttribute('class', 'selected-catch');
+                catchCircle.style.touchAction = 'none';
+                svg.appendChild(catchCircle);
+            }
+        }
+
         // 5. 更新 Dashboard 數據卡片 (中位數卡片根據 isMedianRevealed 決定是否隱藏)
         document.getElementById('val-mean').textContent = `$${Math.round(mean).toLocaleString()}`;
         document.getElementById('val-mode').textContent = (maxFreq > 1) ? `$${modeVals.map(v => v.toLocaleString()).join(', $')}` : '無眾數';
@@ -806,22 +822,26 @@
         if (e.button != null && e.button !== 0) return;
         const pos = clientToSvg(e.clientX, e.clientY);
         const hits = locatePoint(pos.svgX, pos.svgY, e.pointerType, pos.scale);
-        const unique = hits.length === 1 ? hits[0] : null;
+        const nearest = hits[0] || null;
+        const startedOnSelected = e.pointerType === 'touch'
+            && selectedIndex != null
+            && nearest
+            && nearest.idx === selectedIndex;
+        const single = hits.length === 1 ? nearest : null;
+        const tracked = startedOnSelected ? nearest : single;
         activePointer = {
             id: e.pointerId,
             type: e.pointerType,
             startX: e.clientX,
             startY: e.clientY,
-            index: unique ? unique.idx : null,
-            grabOffset: unique ? (pos.svgX - unique.x) : 0,
-            ambiguous: hits.length > 1,
+            index: tracked ? tracked.idx : null,
+            grabOffset: tracked ? (pos.svgX - tracked.x) : 0,
+            ambiguous: hits.length > 1 && !startedOnSelected,
             hitIndices: hits.map(h => h.idx),
             dragging: false,
-            canDrag: e.pointerType === 'touch'
-                ? Boolean(unique && unique.idx === selectedIndex)
-                : Boolean(unique)
+            canDrag: e.pointerType === 'touch' ? startedOnSelected : Boolean(single)
         };
-        if (activePointer.canDrag) {
+        if (activePointer.canDrag && e.pointerType !== 'touch') {
             svg.setPointerCapture(e.pointerId);
         }
     }
@@ -832,8 +852,12 @@
         const threshold = activePointer.type === 'touch' ? 8 : 4;
         if (!activePointer.dragging && dist > threshold) {
             activePointer.dragging = true;
-            selectedIndex = activePointer.index;
-            ambiguousIndices = [];
+            if (activePointer.type === 'touch') {
+                svg.setPointerCapture(e.pointerId);
+            } else {
+                selectedIndex = activePointer.index;
+                ambiguousIndices = [];
+            }
             render();
         }
         if (!activePointer.dragging) return;
